@@ -1,0 +1,7 @@
+src/
+test/
+build.js
+.gitignore
+.git/
+node_modules/
+*.log

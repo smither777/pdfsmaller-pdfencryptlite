@@ -1,0 +1,53 @@
+{
+  "name": "@pdfsmaller/pdf-encrypt-lite",
+  "version": "1.0.0",
+  "description": "Ultra-lightweight PDF encryption (7KB) with real RC4 128-bit encryption. Built for edge environments like Cloudflare Workers. Powers PDFSmaller.com's encryption.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "pdf",
+    "encryption",
+    "pdf-encryption",
+    "RC4",
+    "128-bit",
+    "cloudflare",
+    "edge",
+    "workers",
+    "lightweight",
+    "tiny",
+    "browser",
+    "password-protection",
+    "pdf-lib",
+    "pdfsmaller"
+  ],
+  "author": "PDFSmaller.com <hello@pdfsmaller.com> (https://pdfsmaller.com)",
+  "homepage": "https://pdfsmaller.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pdfsmaller/pdf-encrypt-lite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pdfsmaller/pdf-encrypt-lite/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "peerDependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}
