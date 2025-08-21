@@ -6,7 +6,7 @@ Built by [PDFSmaller.com](https://pdfsmaller.com) - Try our free online PDF tool
 
 [![NPM Version](https://img.shields.io/npm/v/@pdfsmaller/pdf-encrypt-lite.svg)](https://www.npmjs.com/package/@pdfsmaller/pdf-encrypt-lite)
 [![Size](https://img.shields.io/badge/size-7KB-green)](https://bundlephobia.com/package/@pdfsmaller/pdf-encrypt-lite)
-[![License](https://img.shields.io/npm/l/@pdfsmaller/pdf-encrypt-lite.svg)](https://github.com/pdfsmaller/pdf-encrypt-lite/blob/main/LICENSE)
+[![License](https://img.shields.io/npm/l/@pdfsmaller/pdf-encrypt-lite.svg)](https://github.com/smither777/pdfsmaller-pdfencryptlite/blob/main/LICENSE)
 [![Powered by PDFSmaller](https://img.shields.io/badge/Powered%20by-PDFSmaller.com-blue)](https://pdfsmaller.com)
 
 ## 🚀 Why pdf-encrypt-lite?
@@ -149,8 +149,8 @@ export default {
 
 ## 📧 Support
 
-- 🐛 [Report issues](https://github.com/pdfsmaller/pdf-encrypt-lite/issues)
-- 💡 [Request features](https://github.com/pdfsmaller/pdf-encrypt-lite/issues)
+- 🐛 [Report issues](https://github.com/smither777/pdfsmaller-pdfencryptlite/issues)
+- 💡 [Request features](https://github.com/smither777/pdfsmaller-pdfencryptlite/issues)
 - 🌐 [Visit PDFSmaller.com](https://pdfsmaller.com)
 - 📧 [Contact us](https://pdfsmaller.com/contact)
 
