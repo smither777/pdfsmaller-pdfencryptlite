@@ -229,7 +229,7 @@ function encryptStringsInObject(obj, objectNum, generationNum, encryptionKey) {
  * @example
  * const encryptedPdf = await encryptPDF(pdfBytes, 'secret123');
  */
-export async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
+async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
   try {
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes, {
@@ -350,3 +350,4 @@ exports.computeOwnerKey = computeOwnerKey;
 exports.computeUserKey = computeUserKey;
 exports.encryptObject = encryptObject;
 exports.encryptStringsInObject = encryptStringsInObject;
+exports.encryptPDF = encryptPDF;

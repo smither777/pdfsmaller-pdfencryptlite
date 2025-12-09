@@ -36,13 +36,15 @@
  */
 
 // Export the main encryption function
-exports.encryptPDF = encryptPDF; from './pdf-encrypt.js';
+const { encryptPDF } = require('./pdf-encrypt');
+exports.encryptPDF = encryptPDF;;
 
 // Export crypto utilities if needed for advanced use
+const { md5, RC4, hexToBytes, bytesToHex } = require('./crypto-minimal');
 exports.md5 = md5;
 exports.RC4 = RC4;
 exports.hexToBytes = hexToBytes;
-exports.bytesToHex = bytesToHex; from './crypto-minimal.js';
+exports.bytesToHex = bytesToHex;;
 
 // Version info
 const VERSION = '1.0.0';

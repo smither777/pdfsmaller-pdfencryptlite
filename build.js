@@ -35,7 +35,30 @@ srcFiles.forEach(file => {
     });
   
   // Convert ES6 exports to CommonJS
-  cjsContent = cjsContent.replace(/^export\s+\{([^}]+)\}/gm, 
+  // Handle re-exports: export { X, Y } from './module'
+  cjsContent = cjsContent.replace(/^export\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/gm,
+    (match, exports, modulePath) => {
+      // Clean up module path (remove .js extension for require)
+      const cleanModule = modulePath.replace('.js', '');
+
+      // Generate the require statement
+      const requireStatement = `const {${exports}} = require('${cleanModule}');`;
+
+      // Generate export statements
+      const exportList = exports.split(',').map(e => {
+        const trimmed = e.trim();
+        const parts = trimmed.split(' as ');
+        if (parts.length === 2) {
+          return `exports.${parts[1].trim()} = ${parts[0].trim()};`;
+        }
+        return `exports.${trimmed} = ${trimmed};`;
+      }).join('\n');
+
+      return `${requireStatement}\n${exportList}`;
+    });
+
+  // Handle direct exports: export { X, Y }
+  cjsContent = cjsContent.replace(/^export\s+\{([^}]+)\}(?!\s+from)/gm,
     (match, exports) => {
       const exportList = exports.split(',').map(e => {
         const trimmed = e.trim();
@@ -53,9 +76,9 @@ srcFiles.forEach(file => {
       return `${type} ${name}`;
     });
   
-  cjsContent = cjsContent.replace(/^export\s+function\s+(\w+)/gm,
-    (match, name) => {
-      return `function ${name}`;
+  cjsContent = cjsContent.replace(/^export\s+(async\s+)?function\s+(\w+)/gm,
+    (match, asyncKeyword, name) => {
+      return `${asyncKeyword || ''}function ${name}`;
     });
   
   cjsContent = cjsContent.replace(/^export\s+class\s+(\w+)/gm,
@@ -64,7 +87,7 @@ srcFiles.forEach(file => {
     });
   
   // Add exports at the end for functions and classes
-  const functionMatches = [...cjsContent.matchAll(/^function\s+(\w+)/gm)];
+  const functionMatches = [...cjsContent.matchAll(/^(?:async\s+)?function\s+(\w+)/gm)];
   const classMatches = [...cjsContent.matchAll(/^class\s+(\w+)/gm)];
   const constMatches = [...cjsContent.matchAll(/^(?:const|let|var)\s+(\w+)\s*=/gm)];
   
