@@ -187,14 +187,16 @@ function encryptObject(data, objectNum, generationNum, encryptionKey) {
  */
 function encryptStringsInObject(obj, objectNum, generationNum, encryptionKey) {
   if (!obj) return;
-  
+
   if (obj instanceof PDFString) {
     const originalBytes = obj.asBytes();
     const encrypted = encryptObject(originalBytes, objectNum, generationNum, encryptionKey);
-    // Replace the string's value with encrypted hex
-    obj.value = bytesToHex(encrypted);
+    // Store encrypted bytes via charCode (NOT bytesToHex — that writes hex characters
+    // as literal string content, doubling the length and corrupting the data)
+    obj.value = Array.from(encrypted).map(b => String.fromCharCode(b)).join('');
   } else if (obj instanceof PDFHexString) {
-    const originalBytes = hexToBytes(obj.asString());
+    // Use asBytes() for spec-compliant handling of whitespace and odd-length hex
+    const originalBytes = obj.asBytes();
     const encrypted = encryptObject(originalBytes, objectNum, generationNum, encryptionKey);
     obj.value = bytesToHex(encrypted);
   } else if (obj instanceof PDFDict) {
@@ -288,7 +290,7 @@ async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
     for (const [ref, obj] of indirectObjects) {
       const objectNum = ref.objectNumber;
       const generationNum = ref.generationNumber || 0;
-      
+
       // Skip the encryption dictionary itself
       if (obj instanceof PDFDict) {
         const filter = obj.get(PDFName.of('Filter'));
@@ -296,16 +298,34 @@ async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
           continue; // Skip encryption dictionary
         }
       }
-      
+
+      // Skip objects that must not be encrypted per PDF spec (Section 7.6.1)
+      if (obj instanceof PDFRawStream && obj.dict) {
+        const type = obj.dict.get(PDFName.of('Type'));
+        if (type) {
+          const typeName = type.toString();
+          if (typeName === '/XRef' || typeName === '/Sig') {
+            continue;
+          }
+        }
+      }
+
       // Encrypt streams
       if (obj instanceof PDFRawStream) {
         const streamData = obj.contents;
         const encrypted = encryptObject(streamData, objectNum, generationNum, encryptionKey);
         obj.contents = encrypted;
+
+        // Also encrypt strings within the stream's dictionary
+        if (obj.dict) {
+          encryptStringsInObject(obj.dict, objectNum, generationNum, encryptionKey);
+        }
       }
-      
-      // Encrypt strings in the object
-      encryptStringsInObject(obj, objectNum, generationNum, encryptionKey);
+
+      // Encrypt strings in non-stream objects
+      if (!(obj instanceof PDFRawStream)) {
+        encryptStringsInObject(obj, objectNum, generationNum, encryptionKey);
+      }
     }
     
     // Create the /Encrypt dictionary
