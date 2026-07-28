@@ -1,5 +1,5 @@
 /**
- * pdf-encrypt-lite - Ultra-lightweight PDF encryption library (7KB!)
+ * pdf-encrypt-lite - Ultra-lightweight PDF encryption library (~9KB!)
  * 
  * Built by PDFSmaller.com - Your free PDF toolkit
  * Try it online at https://pdfsmaller.com/protect-pdf
@@ -15,7 +15,7 @@
  * 
  * Features:
  * - Real RC4 128-bit encryption
- * - Only ~7KB total size
+ * - Only ~9KB total size
  * - Works in browsers and edge environments
  * - PDF Standard compliant
  * - Zero dependencies (except pdf-lib)
@@ -36,10 +36,13 @@
  */
 
 // Export the main encryption function
-export { encryptPDF } from './pdf-encrypt.js';
+export { encryptPDF, AlreadyEncryptedError, PasswordEncodingError } from './pdf-encrypt.mjs';
+
+// Password encoding helper (PDFDocEncoding, per the legacy security handler)
+export { encodePasswordLegacy } from './password-encoding.mjs';
 
 // Export crypto utilities if needed for advanced use
-export { md5, RC4, hexToBytes, bytesToHex } from './crypto-minimal.js';
+export { md5, RC4, hexToBytes, bytesToHex } from './crypto-minimal.mjs';
 
 // Version info
 export const VERSION = '1.0.0';

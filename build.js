@@ -12,13 +12,16 @@ if (!fs.existsSync('dist')) {
 }
 
 // Copy source files to dist (ES modules)
-const srcFiles = ['index.js', 'pdf-encrypt.js', 'crypto-minimal.js'];
+const srcFiles = ['index.js', 'pdf-encrypt.js', 'crypto-minimal.js', 'password-encoding.js'];
 
 srcFiles.forEach(file => {
   const content = fs.readFileSync(path.join('src', file), 'utf8');
   
-  // Write ES module version (.mjs)
-  fs.writeFileSync(path.join('dist', file.replace('.js', '.mjs')), content);
+  // Write ES module version (.mjs). Relative imports must point at the .mjs
+  // siblings — otherwise dist/pdf-encrypt.mjs pulls in the CommonJS
+  // dist/crypto-minimal.js and relies on Node's CJS-interop guesswork.
+  const esmContent = content.replace(/(from\s*['"])(\.\/[^'"]+)\.js(['"])/g, '$1$2.mjs$3');
+  fs.writeFileSync(path.join('dist', file.replace('.js', '.mjs')), esmContent);
   
   // Create CommonJS version
   let cjsContent = content;
@@ -132,6 +135,24 @@ export function encryptPDF(
   userPassword: string, 
   ownerPassword?: string | null
 ): Promise<Uint8Array>;
+
+/** Thrown when the input PDF already has an /Encrypt dictionary. */
+export class AlreadyEncryptedError extends Error {
+  readonly name: 'AlreadyEncryptedError';
+  readonly code: 'ALREADY_ENCRYPTED';
+}
+
+/** Thrown when a password cannot be encoded for the legacy security handler. */
+export class PasswordEncodingError extends Error {
+  readonly name: 'PasswordEncodingError';
+  readonly code: 'UNSUPPORTED_PASSWORD_CHARACTER';
+}
+
+/**
+ * Encode a password as PDFDocEncoding, as the R<=4 security handler requires.
+ * @throws {PasswordEncodingError} for characters outside PDFDocEncoding.
+ */
+export function encodePasswordLegacy(password: string): Uint8Array;
 
 /**
  * MD5 hash function

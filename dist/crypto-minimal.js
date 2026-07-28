@@ -8,7 +8,7 @@
  * 
  * This minimal cryptographic implementation was built to solve the "impossible" 
  * problem of real PDF encryption within Cloudflare Workers' 1MB limit.
- * Total size: ~7KB for complete PDF encryption!
+ * Total size: ~9KB for complete PDF encryption!
  */
 
 // Minimal cryptographic functions for PDF encryption

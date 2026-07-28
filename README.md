@@ -1,11 +1,18 @@
 # pdf-encrypt-lite 🔒
 
-**Ultra-lightweight PDF encryption library (only 7KB!) with real RC4 128-bit encryption**
+> **⚠️ Upgrade to 1.1.0.** Versions 1.0.x wrote encrypted strings into PDF
+> literal strings without escaping them, which corrupted any PDF containing
+> literal strings — form field names, JavaScript actions, metadata. Passwords
+> with non-ASCII characters also produced files no reader could open. See
+> [CHANGELOG.md](CHANGELOG.md).
+
+
+**Ultra-lightweight PDF encryption library (only ~9KB!) with real RC4 128-bit encryption**
 
 Built by [PDFSmaller.com](https://pdfsmaller.com) - Try our free online PDF tools with this encryption built-in!
 
 [![NPM Version](https://img.shields.io/npm/v/@pdfsmaller/pdf-encrypt-lite.svg)](https://www.npmjs.com/package/@pdfsmaller/pdf-encrypt-lite)
-[![Size](https://img.shields.io/badge/size-7KB-green)](https://bundlephobia.com/package/@pdfsmaller/pdf-encrypt-lite)
+[![Size](https://img.shields.io/badge/size-9KB-green)](https://bundlephobia.com/package/@pdfsmaller/pdf-encrypt-lite)
 [![License](https://img.shields.io/npm/l/@pdfsmaller/pdf-encrypt-lite.svg)](https://github.com/smither777/pdfsmaller-pdfencryptlite/blob/main/LICENSE)
 [![Powered by PDFSmaller](https://img.shields.io/badge/Powered%20by-PDFSmaller.com-blue)](https://pdfsmaller.com)
 
@@ -21,12 +28,12 @@ This library is the exact encryption engine that powers [PDFSmaller.com's Protec
 - ❌ **node-forge**: 1.7MB minified
 - ❌ **crypto-js**: 234KB (still too large with pdf-lib)
 - ❌ **Native crypto**: Not available in many edge environments
-- ✅ **pdf-encrypt-lite**: Only 7KB! 🎉
+- ✅ **pdf-encrypt-lite**: Only ~9KB! 🎉
 
 ## ✨ Features
 
 - 🔐 **Real PDF encryption** - RC4 128-bit encryption that actually works
-- 📦 **Tiny size** - Only ~7KB total (MD5 + RC4 implementations)
+- 📦 **Tiny size** - Only ~9KB total (MD5 + RC4 + PDFDocEncoding)
 - ⚡ **Edge-ready** - Works in Cloudflare Workers, Vercel Edge, Deno Deploy
 - 🌐 **Browser compatible** - No Node.js dependencies
 - 📱 **Password protection** - PDFs prompt for password in any reader
@@ -98,13 +105,13 @@ We built custom implementations of:
 3. **PDF object traversal** - Encrypts all strings and streams
 4. **Standard Security Handler** - Implements PDF encryption spec
 
-Total size: ~7KB 🤯
+Total size: ~9KB 🤯
 
 ## 📊 Comparison
 
 | Library | Size | Real Encryption | Edge Compatible |
 |---------|------|-----------------|-----------------|
-| pdf-encrypt-lite | **7KB** ✅ | ✅ | ✅ |
+| pdf-encrypt-lite | **~9KB** ✅ | ✅ | ✅ |
 | node-forge | 1,700KB | ✅ | ❌ |
 | crypto-js | 234KB | ✅ | ⚠️ |
 | pdf-lib alone | 0KB | ❌ | ✅ |

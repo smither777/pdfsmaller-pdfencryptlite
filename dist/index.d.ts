@@ -17,6 +17,24 @@ export function encryptPDF(
   ownerPassword?: string | null
 ): Promise<Uint8Array>;
 
+/** Thrown when the input PDF already has an /Encrypt dictionary. */
+export class AlreadyEncryptedError extends Error {
+  readonly name: 'AlreadyEncryptedError';
+  readonly code: 'ALREADY_ENCRYPTED';
+}
+
+/** Thrown when a password cannot be encoded for the legacy security handler. */
+export class PasswordEncodingError extends Error {
+  readonly name: 'PasswordEncodingError';
+  readonly code: 'UNSUPPORTED_PASSWORD_CHARACTER';
+}
+
+/**
+ * Encode a password as PDFDocEncoding, as the R<=4 security handler requires.
+ * @throws {PasswordEncodingError} for characters outside PDFDocEncoding.
+ */
+export function encodePasswordLegacy(password: string): Uint8Array;
+
 /**
  * MD5 hash function
  * @param data - Data to hash (string or Uint8Array)
