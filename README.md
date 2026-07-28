@@ -56,7 +56,7 @@ import { PDFDocument } from 'pdf-lib';
 const encryptedPdfBytes = await encryptPDF(existingPdfBytes, 'user-password');
 
 // With separate owner password
-const encryptedPdfBytes = await encryptPDF(
+const withOwnerPassword = await encryptPDF(
   existingPdfBytes, 
   'user-password',
   'owner-password'
@@ -83,6 +83,70 @@ async function protectPDF() {
   a.click();
 }
 ```
+
+## 🌐 Browser (no bundler)
+
+For environments with no build step — SharePoint script editors, classic
+ASP.NET pages, plain HTML — use the UMD build. It reads pdf-lib from the global
+that `pdf-lib.min.js` installs, so load that first:
+
+```html
+<script src="pdf-lib.min.js"></script>
+<script src="node_modules/@pdfsmaller/pdf-encrypt-lite/dist/pdf-encrypt-lite.umd.js"></script>
+<script>
+  (async () => {
+    const bytes = new Uint8Array(await (await fetch('form.pdf')).arrayBuffer());
+    const out = await PDFEncryptLite.encryptPDF(bytes, '', {
+      ownerPassword: 'owner-secret',
+      allowPrinting: true,
+      allowFillingForms: true,
+    });
+  })();
+</script>
+```
+
+`PDFEncryptLite` is the global. RC4 does not use `crypto.subtle`, so it works
+outside a secure context — over plain HTTP, in old browsers, anywhere.
+
+When the source PDF has no file ID one is generated, preferring
+`crypto.getRandomValues()` and falling back to `Math.random()` if Web Crypto is
+absent entirely. That fallback is not cryptographically strong; the file ID is
+not secret and the key's strength comes from the password, but prefer a
+context where `crypto.getRandomValues()` exists.
+
+## 🔐 Permissions
+
+The third argument accepts either the owner password directly or an options
+object with the same permission flags as
+[@pdfsmaller/pdf-encrypt](https://www.npmjs.com/package/@pdfsmaller/pdf-encrypt):
+
+```js
+// owner password only — unchanged, all permissions allowed
+await encryptPDF(pdfBytes, 'user-pw', 'owner-pw');
+
+// or granular permissions
+await encryptPDF(pdfBytes, 'user-pw', {
+  ownerPassword: 'owner-pw',
+  allowPrinting: true,
+  allowFillingForms: true,   // also covers signing an existing signature field
+  allowModifying: false,
+  allowCopying: false,
+});
+```
+
+### Permissions without an open password
+
+Passing an empty string as the user password produces a PDF that opens without
+prompting but still declares its permissions; conforming readers require the
+owner password to change them:
+
+```js
+await encryptPDF(pdfBytes, '', { ownerPassword: 'owner-secret', allowPrinting: true });
+```
+
+PDF permissions are advisory: conforming readers honour them, but nothing
+cryptographically prevents a determined tool from ignoring them. Use a user
+password if the content itself must stay confidential.
 
 ## 🔥 Use Cases
 

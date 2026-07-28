@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.2.0 — 2026-07-28
+
+Brings this package in line with [@pdfsmaller/pdf-encrypt](https://www.npmjs.com/package/@pdfsmaller/pdf-encrypt),
+so code written against one works against the other.
+
+### Added
+
+- **UMD browser build** at `dist/pdf-encrypt-lite.umd.js`, for environments with
+  no bundler and no module loader. Load `pdf-lib.min.js` first, then this file,
+  then use the `PDFEncryptLite` global. pdf-lib is not bundled — it stays a peer
+  dependency, read from the global pdf-lib itself installs.
+- **Granular permissions.** The third argument now also accepts an options
+  object with the same permission flags as the full package
+  (`allowPrinting`, `allowFillingForms`, `allowModifying`, …). Previously every
+  permission was hardcoded to "allowed".
+- Passing an empty string as the user password produces a PDF that opens with
+  no prompt but still declares its permissions — useful for "fill in but do not
+  edit" forms. `allowFillingForms` also covers signing an existing signature
+  field (ISO 32000-2 Table 22, bit 9 applies even when `allowAnnotating` is
+  false).
+
+### Compatibility
+
+The third argument still accepts the owner password as a plain string, and
+omitting it still means "all permissions allowed" — so existing calls produce
+byte-identical output. This was verified against the published 1.1.0 for the
+omitted, `null`, `undefined`, plain-string, empty-string, boxed-`String` and
+array forms.
+
+Only a **plain object** is read as options. Boxed strings and arrays are still
+passed through to the password encoder exactly as in 1.1.0, because reading
+them as options would silently drop the owner password and fall back to the
+user password.
+
 ## 1.1.0 — 2026-07-28
 
 **Upgrade immediately. 1.0.x produced corrupted PDFs.**

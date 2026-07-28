@@ -120,6 +120,54 @@ async function run() {
     assert(originalId === newId, `file /ID changed: ${originalId} -> ${newId}`);
   });
 
+  await test('Test 9: Third argument accepts a string (original signature)', async () => {
+    const bytes = await makePDF();
+    const a = await encryptPDF(new Uint8Array(bytes), 'pw', 'ownerpw');
+    const b = await encryptPDF(new Uint8Array(bytes), 'pw');
+    assert(encryptDictP(a) === -4, `string form should keep all permissions, got ${encryptDictP(a)}`);
+    assert(encryptDictP(b) === -4, `omitted form should keep all permissions, got ${encryptDictP(b)}`);
+  });
+
+  await test('Test 10: Third argument accepts an options object', async () => {
+    const enc = await encryptPDF(new Uint8Array(await makePDF()), '', {
+      ownerPassword: 'ownerpw',
+      allowPrinting: true, allowFillingForms: true, allowAnnotating: false,
+      allowModifying: false, allowCopying: false, allowExtraction: false,
+      allowAssembly: false, allowHighQualityPrint: false,
+    });
+    const P = encryptDictP(enc);
+    const on = (bit) => (P & (1 << (bit - 1))) !== 0;
+    assert(on(3), 'printing should be allowed');
+    assert(on(9), 'form filling (and signing) should be allowed');
+    assert(!on(6), 'annotations should be denied');
+    assert(!on(4), 'modification should be denied');
+    assert(!on(5), 'copying should be denied');
+    assert(P >= -2147483648 && P <= 2147483647, `/P ${P} outside signed 32-bit range`);
+  });
+
+  await test('Test 11: UMD build loads as a browser script tag', async () => {
+    const vm = require('vm');
+    const PDFLib = require('pdf-lib');
+    const sandbox = {
+      PDFLib, console, crypto: globalThis.crypto, TextEncoder, TextDecoder,
+      Uint8Array, WeakSet, Map, Set, Array, Error, Buffer, String, Object,
+      Math, JSON, Promise, Number, ArrayBuffer,
+    };
+    sandbox.self = sandbox;
+    vm.createContext(sandbox);
+    vm.runInContext(require('fs').readFileSync('./dist/pdf-encrypt-lite.umd.js', 'utf8'), sandbox);
+    assert(typeof sandbox.PDFEncryptLite === 'object', 'should set the PDFEncryptLite global');
+    assert(typeof sandbox.PDFEncryptLite.encryptPDF === 'function', 'should expose encryptPDF');
+    const out = await sandbox.PDFEncryptLite.encryptPDF(new Uint8Array(await makePDF()), 'pw');
+    assert(out.length > 0, 'UMD build should encrypt');
+    // and it must fail loudly without pdf-lib
+    const bare = { console }; bare.self = bare; vm.createContext(bare);
+    let guarded = false;
+    try { vm.runInContext(require('fs').readFileSync('./dist/pdf-encrypt-lite.umd.js', 'utf8'), bare); }
+    catch (e) { guarded = /global "PDFLib" not found/.test(e.message); }
+    assert(guarded, 'should give a clear error when pdf-lib is absent');
+  });
+
   console.log('━'.repeat(40));
   console.log(`Results: ${passed} passed, ${failed} failed`);
   console.log('━'.repeat(40));

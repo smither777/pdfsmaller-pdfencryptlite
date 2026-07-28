@@ -125,6 +125,80 @@ srcFiles.forEach(file => {
   fs.writeFileSync(path.join('dist', file), cjsContent);
 });
 
+// ========== Browser (UMD) bundle ==========
+
+/**
+ * A single <script>-tag build, for environments with no bundler and no module
+ * loader — SharePoint script editors, classic ASP.NET pages, plain HTML.
+ *
+ * pdf-lib is NOT bundled: it stays a peer dependency, read from the global
+ * `PDFLib` that pdf-lib.min.js installs. Mirrors @pdfsmaller/pdf-encrypt so the
+ * two packages are used the same way.
+ */
+(function buildUMD() {
+  const PDF_LIB_NAMES = [
+    'PDFDocument', 'PDFName', 'PDFHexString', 'PDFString',
+    'PDFDict', 'PDFArray', 'PDFRawStream', 'PDFNumber',
+  ];
+  const PUBLIC_API = [
+    'encryptPDF', 'AlreadyEncryptedError', 'PasswordEncodingError',
+    'encodePasswordLegacy', 'md5', 'RC4', 'hexToBytes', 'bytesToHex',
+  ];
+  // Dependency order: crypto and password encoding before the engine.
+  const ORDER = ['crypto-minimal.js', 'password-encoding.js', 'pdf-encrypt.js'];
+
+  const bodies = ORDER.map((file) =>
+    fs.readFileSync(path.join('src', file), 'utf8')
+      .replace(/import\s*\{[^}]+\}\s*from\s*['"][^'"]+['"];?/g, '')
+      .replace(/^export\s+(async\s+function|function|class|const|let|var)\s+/gm, '$1 ')
+      .replace(/^export\s*\{[^}]*\}\s*;?[ \t]*$/gm, '')
+      .trim()
+  ).join('\n\n');
+
+  const umd = `/**
+ * @pdfsmaller/pdf-encrypt-lite v${PKG_VERSION} — browser (UMD) build
+ *
+ * Requires pdf-lib to be loaded first (it provides the global \`PDFLib\`):
+ *
+ *   <script src="pdf-lib.min.js"></script>
+ *   <script src="pdf-encrypt-lite.umd.js"></script>
+ *   <script>
+ *     const out = await PDFEncryptLite.encryptPDF(pdfBytes, '', {
+ *       ownerPassword: 'secret', allowPrinting: true, allowFillingForms: true,
+ *     });
+ *   </script>
+ *
+ * RC4 does not use crypto.subtle, so it works outside a secure context — but
+ * crypto.getRandomValues() is still needed to generate a file ID when the
+ * source PDF has none.
+ *
+ * @license MIT
+ * @see https://pdfsmaller.com/protect-pdf
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory(require('pdf-lib'));
+  } else if (typeof define === 'function' && define.amd) {
+    define(['pdf-lib'], factory);
+  } else {
+    if (!root.PDFLib) {
+      throw new Error('pdf-encrypt-lite: global "PDFLib" not found — load pdf-lib.min.js before this file.');
+    }
+    root.PDFEncryptLite = factory(root.PDFLib);
+  }
+}(typeof self !== 'undefined' ? self : this, function (PDFLib) {
+  'use strict';
+
+${PDF_LIB_NAMES.map((n) => `  var ${n} = PDFLib.${n};`).join('\n')}
+
+${bodies.split('\n').map((l) => (l ? '  ' + l : l)).join('\n')}
+
+  return { ${PUBLIC_API.join(', ')} };
+}));
+`;
+  fs.writeFileSync(path.join('dist', 'pdf-encrypt-lite.umd.js'), umd);
+})();
+
 // Create TypeScript definitions
 const dtsContent = `/**
  * pdf-encrypt-lite - TypeScript definitions
@@ -139,10 +213,43 @@ const dtsContent = `/**
  * @param ownerPassword - Optional owner password for permissions
  * @returns Promise<Uint8Array> - The encrypted PDF bytes
  */
+export interface EncryptPDFOptions {
+  ownerPassword?: string | null;
+  /** Allow printing. Default true. */
+  allowPrinting?: boolean;
+  /** Allow document modification. Default true. */
+  allowModifying?: boolean;
+  /** Allow copying text and images. Default true. */
+  allowCopying?: boolean;
+  /** Allow annotations and markup. Default true. */
+  allowAnnotating?: boolean;
+  /**
+   * Allow filling existing form fields — including signing an existing
+   * signature field (ISO 32000-2 Table 22, bit 9, which applies even when
+   * allowAnnotating is false). Default true.
+   */
+  allowFillingForms?: boolean;
+  /** Allow accessibility text extraction. Default true. */
+  allowExtraction?: boolean;
+  /** Allow page insert/rotate/delete. Default true. */
+  allowAssembly?: boolean;
+  /** Allow full-resolution printing. Default true. */
+  allowHighQualityPrint?: boolean;
+}
+
+/**
+ * Encrypt a PDF with RC4 128-bit.
+ *
+ * The third argument accepts either the owner password directly (original
+ * signature) or an options object matching @pdfsmaller/pdf-encrypt.
+ *
+ * Passing an empty string as userPassword produces a PDF that opens without a
+ * prompt but still declares its permissions.
+ */
 export function encryptPDF(
   pdfBytes: Uint8Array, 
   userPassword: string, 
-  ownerPassword?: string | null
+  ownerPasswordOrOptions?: string | null | EncryptPDFOptions
 ): Promise<Uint8Array>;
 
 /** Thrown when the input PDF already has an /Encrypt dictionary. */

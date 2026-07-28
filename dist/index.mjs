@@ -46,7 +46,7 @@ export { md5, RC4, hexToBytes, bytesToHex } from './crypto-minimal.mjs';
 
 // Version info
 // Replaced with the real version from package.json at build time (build.js).
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 export const HOMEPAGE = 'https://pdfsmaller.com';
 export const POWERED_BY = 'PDFSmaller.com';
 

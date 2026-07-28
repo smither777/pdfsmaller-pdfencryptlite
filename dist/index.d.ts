@@ -11,10 +11,43 @@
  * @param ownerPassword - Optional owner password for permissions
  * @returns Promise<Uint8Array> - The encrypted PDF bytes
  */
+export interface EncryptPDFOptions {
+  ownerPassword?: string | null;
+  /** Allow printing. Default true. */
+  allowPrinting?: boolean;
+  /** Allow document modification. Default true. */
+  allowModifying?: boolean;
+  /** Allow copying text and images. Default true. */
+  allowCopying?: boolean;
+  /** Allow annotations and markup. Default true. */
+  allowAnnotating?: boolean;
+  /**
+   * Allow filling existing form fields — including signing an existing
+   * signature field (ISO 32000-2 Table 22, bit 9, which applies even when
+   * allowAnnotating is false). Default true.
+   */
+  allowFillingForms?: boolean;
+  /** Allow accessibility text extraction. Default true. */
+  allowExtraction?: boolean;
+  /** Allow page insert/rotate/delete. Default true. */
+  allowAssembly?: boolean;
+  /** Allow full-resolution printing. Default true. */
+  allowHighQualityPrint?: boolean;
+}
+
+/**
+ * Encrypt a PDF with RC4 128-bit.
+ *
+ * The third argument accepts either the owner password directly (original
+ * signature) or an options object matching @pdfsmaller/pdf-encrypt.
+ *
+ * Passing an empty string as userPassword produces a PDF that opens without a
+ * prompt but still declares its permissions.
+ */
 export function encryptPDF(
   pdfBytes: Uint8Array, 
   userPassword: string, 
-  ownerPassword?: string | null
+  ownerPasswordOrOptions?: string | null | EncryptPDFOptions
 ): Promise<Uint8Array>;
 
 /** Thrown when the input PDF already has an /Encrypt dictionary. */

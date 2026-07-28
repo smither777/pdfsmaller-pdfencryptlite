@@ -1,6 +1,6 @@
 {
   "name": "@pdfsmaller/pdf-encrypt-lite",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Ultra-lightweight PDF encryption (~9KB) with real RC4 128-bit encryption. Built for edge environments like Cloudflare Workers. Powers PDFSmaller.com's encryption.",
   "type": "commonjs",
   "main": "dist/index.js",

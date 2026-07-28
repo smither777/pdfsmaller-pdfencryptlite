@@ -38,6 +38,43 @@ class AlreadyEncryptedError extends Error {
 
 exports.PasswordEncodingError = PasswordEncodingError;;
 
+// ========== Permission Flags (ISO 32000-2 Table 22) ==========
+
+const PERM_FLAGS = {
+  PRINT:              0x00000004, // Bit 3
+  MODIFY:             0x00000008, // Bit 4
+  COPY:               0x00000010, // Bit 5
+  ANNOTATE:           0x00000020, // Bit 6
+  FILL_FORMS:         0x00000100, // Bit 9  — also covers signing an existing
+                                  //          signature field, even if bit 6 is clear
+  EXTRACT:            0x00000200, // Bit 10
+  ASSEMBLE:           0x00000400, // Bit 11
+  PRINT_HIGH_QUALITY: 0x00000800, // Bit 12
+};
+
+/**
+ * Build the 32-bit /P value. Reserved bits 7-8 and 13-32 are set; every
+ * permission defaults to allowed, so omitting options reproduces the
+ * all-permissions value this package used before it accepted them.
+ *
+ * `| 0` is load-bearing: /P must be a *signed* 32-bit integer, and the
+ * unsigned form would be written verbatim and fall outside the legal range.
+ */
+function buildPermissions(options) {
+  let P = 0xFFFFF000 | 0x000000C0;
+
+  if (options.allowPrinting !== false) P |= PERM_FLAGS.PRINT;
+  if (options.allowModifying !== false) P |= PERM_FLAGS.MODIFY;
+  if (options.allowCopying !== false) P |= PERM_FLAGS.COPY;
+  if (options.allowAnnotating !== false) P |= PERM_FLAGS.ANNOTATE;
+  if (options.allowFillingForms !== false) P |= PERM_FLAGS.FILL_FORMS;
+  if (options.allowExtraction !== false) P |= PERM_FLAGS.EXTRACT;
+  if (options.allowAssembly !== false) P |= PERM_FLAGS.ASSEMBLE;
+  if (options.allowHighQualityPrint !== false) P |= PERM_FLAGS.PRINT_HIGH_QUALITY;
+
+  return P | 0;
+}
+
 // Standard PDF padding string (from PDF specification)
 const PADDING = new Uint8Array([
   0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
@@ -308,8 +345,23 @@ function encryptStringsInObject(obj, objectNum, generationNum, encryptionKey, se
  * @example
  * const encryptedPdf = await encryptPDF(pdfBytes, 'secret123');
  */
-async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
+async function encryptPDF(pdfBytes, userPassword, ownerPasswordOrOptions = null) {
   try {
+    // Third argument accepts either the owner password directly (the original
+    // signature) or an options object matching @pdfsmaller/pdf-encrypt, so code
+    // written against the full package works here unchanged.
+    // Only a plain object is options. Boxed strings and arrays also report
+    // typeof 'object', and 1.1.0 fed them straight to the password encoder —
+    // reading them as options would silently drop the owner password and
+    // fall back to the user password, which is security-relevant.
+    const isOptions = ownerPasswordOrOptions !== null
+      && typeof ownerPasswordOrOptions === 'object'
+      && !Array.isArray(ownerPasswordOrOptions)
+      && !(ownerPasswordOrOptions instanceof String);
+    const options = isOptions
+      ? ownerPasswordOrOptions
+      : { ownerPassword: ownerPasswordOrOptions };
+    const ownerPassword = options.ownerPassword != null ? options.ownerPassword : null;
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes, {
       ignoreEncryption: true,
@@ -355,10 +407,7 @@ async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
     }
     
     // Set permissions (all allowed for now)
-    // ISO 32000 requires /P to be a *signed* 32-bit integer. In JavaScript the
-    // literal 0xFFFFFFFC is the positive number 4294967292, which pdf-lib would
-    // write verbatim — outside the permitted range. `| 0` reinterprets it as -4.
-    const permissions = 0xFFFFFFFC | 0; // -4
+    const permissions = buildPermissions(options);
     
     // Compute O (owner) key
     const ownerKey = computeOwnerKey(ownerPassword, userPassword);
@@ -455,6 +504,7 @@ async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
  */
 
 // PDFSmaller.com exports
+exports.buildPermissions = buildPermissions;
 exports.padPassword = padPassword;
 exports.computeEncryptionKey = computeEncryptionKey;
 exports.computeOwnerKey = computeOwnerKey;
