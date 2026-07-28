@@ -14,8 +14,17 @@ if (!fs.existsSync('dist')) {
 // Copy source files to dist (ES modules)
 const srcFiles = ['index.js', 'pdf-encrypt.js', 'crypto-minimal.js', 'password-encoding.js'];
 
+const PKG_VERSION = require('./package.json').version;
+
 srcFiles.forEach(file => {
-  const content = fs.readFileSync(path.join('src', file), 'utf8');
+  let content = fs.readFileSync(path.join('src', file), 'utf8');
+
+  // Keep the exported VERSION in lockstep with package.json — it silently drifted
+  // to a stale value once already, which would misreport a patched install.
+  content = content.replace(
+    /(export const VERSION = ')[^']*(')/,
+    `$1${PKG_VERSION}$2`
+  );
   
   // Write ES module version (.mjs). Relative imports must point at the .mjs
   // siblings — otherwise dist/pdf-encrypt.mjs pulls in the CommonJS

@@ -355,7 +355,10 @@ export async function encryptPDF(pdfBytes, userPassword, ownerPassword = null) {
     }
     
     // Set permissions (all allowed for now)
-    const permissions = 0xFFFFFFFC; // -4 in signed 32-bit
+    // ISO 32000 requires /P to be a *signed* 32-bit integer. In JavaScript the
+    // literal 0xFFFFFFFC is the positive number 4294967292, which pdf-lib would
+    // write verbatim — outside the permitted range. `| 0` reinterprets it as -4.
+    const permissions = 0xFFFFFFFC | 0; // -4
     
     // Compute O (owner) key
     const ownerKey = computeOwnerKey(ownerPassword, userPassword);

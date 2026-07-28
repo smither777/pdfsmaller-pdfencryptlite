@@ -7,7 +7,7 @@
 > [CHANGELOG.md](CHANGELOG.md).
 
 
-**Ultra-lightweight PDF encryption library (only ~9KB!) with real RC4 128-bit encryption**
+**Ultra-lightweight PDF encryption library (~9KB gzipped) with real RC4 128-bit encryption**
 
 Built by [PDFSmaller.com](https://pdfsmaller.com) - Try our free online PDF tools with this encryption built-in!
 
@@ -28,12 +28,12 @@ This library is the exact encryption engine that powers [PDFSmaller.com's Protec
 - ❌ **node-forge**: 1.7MB minified
 - ❌ **crypto-js**: 234KB (still too large with pdf-lib)
 - ❌ **Native crypto**: Not available in many edge environments
-- ✅ **pdf-encrypt-lite**: Only ~9KB! 🎉
+- ✅ **pdf-encrypt-lite**: ~9KB gzipped! 🎉
 
 ## ✨ Features
 
 - 🔐 **Real PDF encryption** - RC4 128-bit encryption that actually works
-- 📦 **Tiny size** - Only ~9KB total (MD5 + RC4 + PDFDocEncoding)
+- 📦 **Tiny size** - ~9KB gzipped (MD5 + RC4 + PDFDocEncoding)
 - ⚡ **Edge-ready** - Works in Cloudflare Workers, Vercel Edge, Deno Deploy
 - 🌐 **Browser compatible** - No Node.js dependencies
 - 📱 **Password protection** - PDFs prompt for password in any reader
@@ -105,13 +105,13 @@ We built custom implementations of:
 3. **PDF object traversal** - Encrypts all strings and streams
 4. **Standard Security Handler** - Implements PDF encryption spec
 
-Total size: ~9KB 🤯
+Total size: ~9KB gzipped 🤯
 
 ## 📊 Comparison
 
 | Library | Size | Real Encryption | Edge Compatible |
 |---------|------|-----------------|-----------------|
-| pdf-encrypt-lite | **~9KB** ✅ | ✅ | ✅ |
+| pdf-encrypt-lite | **~9KB** (gzipped) ✅ | ✅ | ✅ |
 | node-forge | 1,700KB | ✅ | ❌ |
 | crypto-js | 234KB | ✅ | ⚠️ |
 | pdf-lib alone | 0KB | ❌ | ✅ |

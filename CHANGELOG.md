@@ -13,8 +13,10 @@ the object structure of the output file.
 
 Any PDF containing literal strings — form field names, appearance strings,
 JavaScript actions, metadata, i.e. effectively all of them — could come back with
-fields missing, JavaScript truncated, or objects swallowed whole. Because the key
-stream differs per document, a different part broke each time.
+fields missing, JavaScript truncated, or objects swallowed whole. Output also
+varied from run to run — the file `/ID` feeds the RC4 key, and it was being
+regenerated every run by the `/ID` bug below — so a different part broke each
+time.
 
 Verified against a real Acrobat form: the output now preserves all form fields and
 JavaScript calculations, checked with an independent PDF parser.
@@ -31,6 +33,11 @@ JavaScript calculations, checked with an independent PDF parser.
   regenerated appearance stream was written as plaintext into an encrypted file.
 - **The existing file `/ID` is preserved.** `Array.isArray()` is false for a
   `PDFArray`, so the trailer ID was previously always discarded and regenerated.
+- **`/P` is now a signed 32-bit integer.** The permission flags were written from
+  the JavaScript literal `0xFFFFFFFC`, which is the *positive* number
+  `4294967292`, so the emitted file carried `/P 4294967292` — outside the range
+  ISO 32000 permits. It now emits `/P -4`. Lenient readers tolerated the old
+  value; strict readers and validators need not.
 
 ### Added
 
@@ -51,6 +58,17 @@ JavaScript calculations, checked with an independent PDF parser.
 `encryptPDF()` now throws for inputs it previously accepted and silently mangled:
 already-encrypted PDFs, and passwords containing characters outside
 PDFDocEncoding. ASCII passwords are byte-identical to 1.0.x.
+
+### A note on the version number
+
+Strict SemVer would call this a major bump: `encryptPDF()` now throws for inputs
+1.0.x accepted. It is released as a minor deliberately, because in 1.0.x those
+same calls returned a **silently corrupted PDF** — nothing that genuinely worked
+has broken. Shipping it as a minor means existing `^1.0.x` dependents pick the
+fix up on their next install instead of staying on a version that corrupts every
+PDF containing literal strings.
+
+If you pin exact versions, upgrade explicitly.
 
 ### Size
 

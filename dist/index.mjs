@@ -15,7 +15,7 @@
  * 
  * Features:
  * - Real RC4 128-bit encryption
- * - Only ~9KB total size
+ * - Only ~9KB gzipped
  * - Works in browsers and edge environments
  * - PDF Standard compliant
  * - Zero dependencies (except pdf-lib)
@@ -45,7 +45,8 @@ export { encodePasswordLegacy } from './password-encoding.mjs';
 export { md5, RC4, hexToBytes, bytesToHex } from './crypto-minimal.mjs';
 
 // Version info
-export const VERSION = '1.0.0';
+// Replaced with the real version from package.json at build time (build.js).
+export const VERSION = '1.1.0';
 export const HOMEPAGE = 'https://pdfsmaller.com';
 export const POWERED_BY = 'PDFSmaller.com';
 
