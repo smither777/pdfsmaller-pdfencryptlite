@@ -34,6 +34,14 @@ function encryptDictP(bytes) {
   return p ? Number(p[1]) : null;
 }
 
+/** Find a hex-string entry inside the /Encrypt dictionary. */
+function encryptDictHex(bytes, key) {
+  const s = Buffer.from(bytes).toString('latin1');
+  const dict = s.match(/\/Filter \/Standard[\s\S]{0,400}?>>/);
+  const value = dict && dict[0].match(new RegExp(`/${key} <([0-9A-Fa-f]+)>`));
+  return value ? value[1].toLowerCase() : null;
+}
+
 async function makePDF(title) {
   const doc = await PDFDocument.create();
   doc.addPage();
@@ -145,7 +153,23 @@ async function run() {
     assert(P >= -2147483648 && P <= 2147483647, `/P ${P} outside signed 32-bit range`);
   });
 
-  await test('Test 11: UMD build loads as a browser script tag', async () => {
+  await test('Test 11: Third argument accepts a boxed string from another realm', async () => {
+    const vm = require('vm');
+    const bytes = await makePDF();
+    const crossRealmOwnerPassword = vm.runInNewContext("new String('ownerpw')");
+    const primitive = await encryptPDF(new Uint8Array(bytes), 'userpw', 'ownerpw');
+    const boxed = await encryptPDF(new Uint8Array(bytes), 'userpw', crossRealmOwnerPassword);
+    const fallback = await encryptPDF(new Uint8Array(bytes), 'userpw');
+    const primitiveOwnerKey = encryptDictHex(primitive, 'O');
+    const boxedOwnerKey = encryptDictHex(boxed, 'O');
+    const fallbackOwnerKey = encryptDictHex(fallback, 'O');
+
+    assert(primitiveOwnerKey !== null, 'primitive owner key should be present');
+    assert(boxedOwnerKey === primitiveOwnerKey, 'cross-realm boxed string should preserve the owner password');
+    assert(boxedOwnerKey !== fallbackOwnerKey, 'cross-realm boxed string should not fall back to the user password');
+  });
+
+  await test('Test 12: UMD build loads as a browser script tag', async () => {
     const vm = require('vm');
     const PDFLib = require('pdf-lib');
     const sandbox = {

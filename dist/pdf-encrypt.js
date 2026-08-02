@@ -354,13 +354,18 @@ async function encryptPDF(pdfBytes, userPassword, ownerPasswordOrOptions = null)
     // typeof 'object', and 1.1.0 fed them straight to the password encoder —
     // reading them as options would silently drop the owner password and
     // fall back to the user password, which is security-relevant.
+    // `instanceof String` is realm-specific, so it misses boxed strings from
+    // iframes and Node.js vm contexts. Use the intrinsic brand check instead.
+    const isBoxedString = ownerPasswordOrOptions !== null
+      && typeof ownerPasswordOrOptions === 'object'
+      && Object.prototype.toString.call(ownerPasswordOrOptions) === '[object String]';
     const isOptions = ownerPasswordOrOptions !== null
       && typeof ownerPasswordOrOptions === 'object'
       && !Array.isArray(ownerPasswordOrOptions)
-      && !(ownerPasswordOrOptions instanceof String);
+      && !isBoxedString;
     const options = isOptions
       ? ownerPasswordOrOptions
-      : { ownerPassword: ownerPasswordOrOptions };
+      : { ownerPassword: isBoxedString ? String(ownerPasswordOrOptions) : ownerPasswordOrOptions };
     const ownerPassword = options.ownerPassword != null ? options.ownerPassword : null;
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes, {
